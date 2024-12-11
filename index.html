@@ -180,7 +180,7 @@
     <body>
     
     <div class="container">
-      <button class="settings-button" onclick="openSettings()">⚙️</button>
+      <!-- <button class="settings-button" onclick="openSettings()">⚙️</button> -->
       <div class="header">
         <h1>TON to HIVE/STEEM Swap</h1>
         <div id="connect-button"></div>
@@ -217,7 +217,7 @@
     </div>
 
     <!-- Settings Modal -->
-    <div id="settingsModal" class="modal">
+    <!-- <div id="settingsModal" class="modal">
       <div class="modal-content">
         <span class="close" onclick="closeSettings()">&times;</span>
         <h2>Settings</h2>
@@ -226,12 +226,17 @@
         </div>
         <button onclick="saveSettings()">Save</button>
       </div>
-    </div>
+    </div> -->
     
     <script>
     let tonConnectUI = null;
     let connectedWalletAddress = "";
-    let apiKey = localStorage.getItem('changeNowApiKey') || "c946d744099763c41273765404288fb43a8579d9c958b98800cd25ef833b5742";
+    let apiKey = getApiKeyFromUrl();
+
+    function getApiKeyFromUrl() {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get('apiKey'); // Sostituisci 'apiKey' con il nome del parametro che stai cercando
+    }
 
     function openSettings() {
       document.getElementById('settingsModal').style.display = 'block';
