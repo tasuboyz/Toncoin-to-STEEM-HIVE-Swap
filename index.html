@@ -1,0 +1,432 @@
+<html><head><base href="https://tasuboyz.github.io/Tasu-Wallet-TWA/" />
+    <title>TON to HIVE/STEEM Swap Interface</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+    <style>
+    :root {
+      --primary: #0088CC;
+      --dark: #026195;
+      --light: #E3F2FD;
+      --white: #ffffff;
+      --gradient: linear-gradient(135deg, #0088CC 0%, #026195 100%);
+      --shadow: 0 4px 6px rgba(0,0,0,0.1);
+      --radius: 12px;
+    }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 15px;
+      background: #f8f9fa;
+      min-height: 100vh;
+    }
+    
+    .container {
+      max-width: 480px;
+      margin: 0 auto;
+      background: var(--white);
+      padding: 20px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid var(--light);
+      position: relative;
+    }
+    
+    .header h1 {
+      font-size: 1.75rem;
+      margin: 10px 0 20px 0;
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    #connect-button {
+      display: flex;
+      justify-content: center;
+      margin: 20px auto;
+      width: 100%;
+      max-width: 240px;
+    }
+    
+    #status-container {
+      padding: 12px 15px;
+      border-radius: var(--radius);
+      margin-bottom: 25px;
+      transition: all 0.3s ease;
+    }
+    
+    .input-group {
+      position: relative;
+      margin-bottom: 15px;
+    }
+    
+    select, input {
+      padding: 15px;
+      width: 100%;
+      box-sizing: border-box;
+      font-size: 16px;
+      border: 2px solid var(--light);
+      border-radius: var(--radius);
+      transition: all 0.3s ease;
+      background: var(--white);
+    }
+    
+    select:focus, input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(0,136,204,0.1);
+    }
+    
+    button {
+      background: var(--gradient);
+      color: var(--white);
+      border: none;
+      padding: 15px;
+      width: 100%;
+      margin: 15px 0;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: var(--shadow);
+    }
+    
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+    }
+    
+    button:active {
+      transform: translateY(0);
+    }
+    
+    .swap-info {
+      background: var(--light);
+      padding: 20px;
+      border-radius: var(--radius);
+      margin-top: 25px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .settings-button {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      width: auto;
+      padding: 8px;
+      background: var(--light);
+      border-radius: 50%;
+      box-shadow: var(--shadow);
+      font-size: 24px;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+
+    .settings-button:hover {
+      transform: rotate(45deg);
+      background: var(--primary);
+      color: var(--white);
+    }
+
+    .modal-content {
+      background: var(--white);
+      padding: 25px;
+      border-radius: var(--radius);
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+
+    .modal-content h2 {
+      margin-top: 0;
+      color: var(--primary);
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+    }
+
+    .close {
+      position: absolute;
+      right: 20px;
+      top: 15px;
+      font-size: 28px;
+      cursor: pointer;
+      color: #666;
+      transition: color 0.3s ease;
+    }
+
+    .close:hover {
+      color: #333;
+    }
+
+    .error {
+      color: #dc3545;
+      background: #fde8e8;
+      padding: 12px;
+      border-radius: var(--radius);
+      margin-top: 15px;
+      font-size: 14px;
+    }
+    </style>
+    </head>
+    <body>
+    
+    <div class="container">
+      <!-- <button class="settings-button" onclick="openSettings()">⚙️</button> -->
+      <div class="header">
+        <h1>TON to HIVE/STEEM Swap</h1>
+        <div id="connect-button"></div>
+      </div>
+      
+      <div id="status-container">
+        <p id="status-text">Wallet disconnected</p>
+      </div>
+      
+      <div class="swap-container" id="transaction-form">
+        <div class="input-group">
+          <select id="fromCurrency" disabled>
+            <option value="ton">TON</option>
+          </select>
+          <input type="number" id="fromAmount" placeholder="Amount in TON">
+        </div>
+        
+        <div class="input-group">
+          <select id="toCurrency">
+            <option value="hive">HIVE</option>
+            <option value="steem">STEEM</option>
+          </select>
+          <input type="number" id="toAmount" placeholder="You will receive" readonly>
+        </div>
+
+        <div class="input-group">
+          <input type="text" id="receivingAddress" placeholder="Enter your HIVE/STEEM receiving address">
+        </div>
+        
+        <button onclick="initiateSwap()">Swap Now</button>
+        
+        <div class="swap-info" id="swapInfo"></div>
+      </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <!-- <div id="settingsModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeSettings()">&times;</span>
+        <h2>Settings</h2>
+        <div class="input-group">
+          <input type="text" id="apiKeyInput" placeholder="Enter your ChangeNow API Key">
+        </div>
+        <button onclick="saveSettings()">Save</button>
+      </div>
+    </div>
+     -->
+    <script>
+    let tonConnectUI = null;
+    let connectedWalletAddress = "";
+    let apiKey = localStorage.getItem('changeNowApiKey') || "c946d744099763c41273765404288fb43a8579d9c958b98800cd25ef833b5742";
+
+    function openSettings() {
+      document.getElementById('settingsModal').style.display = 'block';
+      document.getElementById('apiKeyInput').value = apiKey;
+    }
+
+    function closeSettings() {
+      document.getElementById('settingsModal').style.display = 'none';
+    }
+
+    function saveSettings() {
+      const newApiKey = document.getElementById('apiKeyInput').value;
+      apiKey = newApiKey;
+      localStorage.setItem('changeNowApiKey', newApiKey);
+      closeSettings();
+    }
+        
+    async function initializeTonConnect() {
+        try {
+            if (tonConnectUI) {
+                await tonConnectUI.disconnect();
+            }
+
+            tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+                manifestUrl: 'https://tasuboyz.github.io/Tasu-Wallet-TWA/tonconnect-manifest.json',
+                buttonRootId: 'connect-button'
+            });
+
+            tonConnectUI.uiOptions = {
+                actionsConfiguration: {
+                    modals: ['before', 'success', 'error'],
+                    notifications: ['before', 'success', 'error']
+                }
+            };
+
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            tonConnectUI.onStatusChange((walletInfo) => {
+                const statusContainer = document.getElementById('status-container');
+                const statusText = document.getElementById('status-text');
+                const transactionForm = document.getElementById('transaction-form');
+                
+                statusContainer.style.display = 'block';
+                if (walletInfo && tonConnectUI.connected) {
+                    connectedWalletAddress = walletInfo.account.address;
+                    statusText.textContent = `Connected wallet: ${walletInfo.name || 'TON Wallet'}`;
+                    statusContainer.style.backgroundColor = '#d4edda';
+                    statusText.style.color = '#155724';
+                    transactionForm.style.display = 'block';
+                } else {
+                    statusText.textContent = 'Wallet disconnected';
+                    statusContainer.style.backgroundColor = '#f8d7da';
+                    statusText.style.color = '#721c24';
+                    transactionForm.style.display = 'none';
+                }
+            });
+        } catch (error) {
+            console.error('Initialization error:', error);
+        }
+    }
+
+    async function getEstimate() {
+        if (!apiKey) {
+            showError('Please set your API key in settings');
+            return;
+        }
+
+        const fromAmount = parseFloat(document.getElementById('fromAmount').value);
+        const fromCurrency = document.getElementById('fromCurrency').value;
+        const toCurrency = document.getElementById('toCurrency').value;
+
+        if (!fromAmount) return;
+
+        const myHeaders = new Headers();
+        myHeaders.append("x-changenow-api-key", apiKey);
+
+        const requestOptions = {
+            headers: myHeaders,
+        };
+
+        try {
+            const response = await fetch(`https://api.changenow.io/v2/exchange/estimated-amount?fromCurrency=${fromCurrency}&toCurrency=${toCurrency}&fromAmount=${fromAmount}&fromNetwork=${fromCurrency}&toNetwork=${toCurrency}&flow=standard`, requestOptions);
+            
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            const result = await response.json();
+            const estimatedAmount = result.toAmount;
+            document.getElementById('toAmount').value = estimatedAmount;
+            const rate = estimatedAmount / fromAmount; 
+            updateSwapInfo(fromAmount, toCurrency, rate);
+        } catch (error) {
+            showError('Error getting estimate: ' + error.message);
+        }
+    }
+
+    function updateSwapInfo(fromAmount, toCurrency, rate) {
+      const info = document.getElementById('swapInfo');
+      info.innerHTML = `
+        <div style="display: grid; gap: 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span>Exchange Rate:</span>
+            <strong>1 TON = ${rate.toFixed(4)} ${toCurrency.toUpperCase()}</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span>Estimated Time:</span>
+            <strong>~15 minutes</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span>Refund Address:</span>
+            <strong style="word-break: break-all; font-size: 12px;">${connectedWalletAddress}</strong>
+          </div>
+        </div>
+      `;
+    }
+
+    async function initiateSwap() {
+        if (!apiKey) {
+            showError('Please set your API key in settings');
+            return;
+        }
+        
+        const fromCurrency = document.getElementById('fromCurrency').value;
+        const toCurrency = document.getElementById('toCurrency').value;
+        const fromAmount = document.getElementById('fromAmount').value;
+        const receivingAddress = document.getElementById('receivingAddress').value;
+
+        if (!receivingAddress) {
+            showError('Please enter a receiving address');
+            return;
+        }
+        
+        try {
+            const response = await fetch('https://api.changenow.io/v2/exchange', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-changenow-api-key': apiKey
+                },
+                body: JSON.stringify({
+                    fromCurrency,
+                    toCurrency,
+                    fromAmount,
+                    address: receivingAddress,
+                    refundAddress: connectedWalletAddress,
+                    fromNetwork: fromCurrency,
+                    toNetwork: toCurrency,
+                    flow: 'standard'
+                })
+            });
+            
+            const transaction = await response.json();
+            
+            const swapTransaction = {
+                validUntil: Math.floor(Date.now() / 1000) + 60,
+                messages: [
+                    {
+                        address: transaction.payinAddress,
+                        amount: (parseFloat(fromAmount) * 1000000000).toString(),
+                        payload: `swap:${toCurrency}:${transaction.payinAddress}:${connectedWalletAddress}`
+                    }
+                ]
+            };
+
+            const result = await tonConnectUI.sendTransaction(swapTransaction);
+            console.log('Transaction sent:', result);
+            
+            const info = document.getElementById('swapInfo');
+            info.innerHTML += `<p style="color: green">Transaction submitted! ID: ${result.id}</p>`;
+        } catch (error) {
+            showError('Error creating transaction: ' + error.message);
+        }
+    }
+
+    function showError(message) {
+      const info = document.getElementById('swapInfo');
+      info.innerHTML = `<div class="error">${message}</div>`;
+    }
+
+    // Event listeners
+    document.getElementById('fromAmount').addEventListener('input', getEstimate);
+    document.getElementById('toCurrency').addEventListener('change', getEstimate);
+
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+      if (event.target == document.getElementById('settingsModal')) {
+        closeSettings();
+      }
+    }
+
+    // Initialize on page load
+    window.addEventListener('load', () => {
+      initializeTonConnect();
+    });
+    </script>
+    
+    </body></html>
