@@ -59,6 +59,8 @@
       border-radius: var(--radius);
       margin-bottom: 25px;
       transition: all 0.3s ease;
+      background-color: #f8d7da;
+      color : #721c24;
     }
     
     .input-group {
@@ -175,6 +177,7 @@
       margin-top: 15px;
       font-size: 14px;
     }
+
     </style>
     </head>
     <body>
@@ -190,7 +193,7 @@
         <p id="status-text">Wallet disconnected</p>
       </div>
       
-      <div class="swap-container" id="transaction-form">
+      <div class="swap-container" id="transaction-form" style="display: none;">
         <div class="input-group">
           <select id="fromCurrency" disabled>
             <option value="ton">TON</option>
@@ -216,18 +219,6 @@
       </div>
     </div>
 
-    <!-- Settings Modal -->
-    <!-- <div id="settingsModal" class="modal">
-      <div class="modal-content">
-        <span class="close" onclick="closeSettings()">&times;</span>
-        <h2>Settings</h2>
-        <div class="input-group">
-          <input type="text" id="apiKeyInput" placeholder="Enter your ChangeNow API Key">
-        </div>
-        <button onclick="saveSettings()">Save</button>
-      </div>
-    </div> -->
-    
     <script>
     let tonConnectUI = null;
     let connectedWalletAddress = "";
@@ -238,22 +229,6 @@
       return urlParams.get('apiKey'); // Sostituisci 'apiKey' con il nome del parametro che stai cercando
     }
 
-    function openSettings() {
-      document.getElementById('settingsModal').style.display = 'block';
-      document.getElementById('apiKeyInput').value = apiKey;
-    }
-
-    function closeSettings() {
-      document.getElementById('settingsModal').style.display = 'none';
-    }
-
-    function saveSettings() {
-      const newApiKey = document.getElementById('apiKeyInput').value;
-      apiKey = newApiKey;
-      localStorage.setItem('changeNowApiKey', newApiKey);
-      closeSettings();
-    }
-        
     async function initializeTonConnect() {
         try {
             if (tonConnectUI) {
