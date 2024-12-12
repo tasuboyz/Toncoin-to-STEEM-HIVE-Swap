@@ -12,20 +12,36 @@
     --gradient: linear-gradient(135deg, #0088CC 0%, #026195 100%);
     --shadow: 0 4px 6px rgba(0,0,0,0.1);
     --radius: 12px;
+    --bg-color: #f8f9fa;
+    --container-bg: #ffffff;
+    --text-color: #000000;
+    --border-color: #E3F2FD;
+    --input-bg: #ffffff;
+    --swap-info-bg: #E3F2FD;
   }
   
+  [data-theme="dark"] {
+    --bg-color: #1a1a1a;
+    --container-bg: #2d2d2d;
+    --text-color: #ffffff;
+    --border-color: #404040;
+    --input-bg: #3d3d3d;
+    --swap-info-bg: #404040;
+  }
+
   body {
     font-family: 'Inter', sans-serif;
     margin: 0;
     padding: 15px;
-    background: #f8f9fa;
+    background: var(--bg-color);
+    color: var(--text-color);
     min-height: 100vh;
   }
   
   .container {
     max-width: 480px;
     margin: 0 auto;
-    background: var(--white);
+    background: var(--container-bg);
     padding: 20px;
     border-radius: var(--radius);
     box-shadow: var(--shadow);
@@ -35,7 +51,7 @@
     text-align: center;
     margin-bottom: 25px;
     padding-bottom: 15px;
-    border-bottom: 2px solid var(--light);
+    border-bottom: 2px solid var(--border-color);
     position: relative;
   }
   
@@ -74,10 +90,11 @@
     width: 100%;
     box-sizing: border-box;
     font-size: 16px;
-    border: 2px solid var(--light);
+    border: 2px solid var(--border-color);
     border-radius: var(--radius);
     transition: all 0.3s ease;
-    background: var(--white);
+    background: var(--input-bg);
+    color: var(--text-color);
   }
   
   select:focus, input:focus {
@@ -111,63 +128,30 @@
   }
   
   .swap-info {
-    background: var(--light);
+    background: var(--swap-info-bg);
     padding: 20px;
     border-radius: var(--radius);
     margin-top: 25px;
     font-size: 14px;
     line-height: 1.6;
+    color: var(--text-color);
   }
 
-  .settings-button {
+  .theme-toggle {
     position: absolute;
     top: 20px;
     right: 20px;
-    width: auto;
-    padding: 8px;
-    background: var(--light);
-    border-radius: 50%;
-    box-shadow: var(--shadow);
-    font-size: 24px;
+    background: none;
     border: none;
+    font-size: 24px;
     cursor: pointer;
-    transition: transform 0.3s ease;
+    padding: 8px;
+    width: auto;
+    box-shadow: none;
   }
 
-  .settings-button:hover {
-    transform: rotate(45deg);
-    background: var(--primary);
-    color: var(--white);
-  }
-
-  .modal-content {
-    background: var(--white);
-    padding: 25px;
-    border-radius: var(--radius);
-    width: 90%;
-    max-width: 400px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-  }
-
-  .modal-content h2 {
-    margin-top: 0;
-    color: var(--primary);
-    font-size: 1.5rem;
-    margin-bottom: 20px;
-  }
-
-  .close {
-    position: absolute;
-    right: 20px;
-    top: 15px;
-    font-size: 28px;
-    cursor: pointer;
-    color: #666;
-    transition: color 0.3s ease;
-  }
-
-  .close:hover {
-    color: #333;
+  .theme-toggle:hover {
+    transform: scale(1.1);
   }
 
   .error {
@@ -188,7 +172,7 @@
   <body>
   
   <div class="container">
-    <!-- <button class="settings-button" onclick="openSettings()">⚙️</button> -->
+    <button class="theme-toggle" onclick="toggleTheme()" id="theme-toggle">🌞</button>
     <div class="header">
       <h1>TON to HIVE/STEEM Swap</h1>
       <div id="connect-button"></div>
@@ -333,13 +317,14 @@
           const estimatedAmount = result.toAmount;
           document.getElementById('toAmount').value = estimatedAmount;
           const rate = estimatedAmount / fromAmount; 
-          updateSwapInfo(fromAmount, toCurrency, rate);
+          await updateSwapInfo(fromAmount, toCurrency, rate);
       } catch (error) {
           showError('Error getting estimate: ' + error.message);
       }
   }
 
-  function updateSwapInfo(fromAmount, toCurrency, rate) {
+  async function updateSwapInfo(fromAmount, toCurrency, rate) {
+    const refundWallet = await createRefundWallet(connectedWalletAddress)
     const info = document.getElementById('swapInfo');
     info.innerHTML = `
       <div style="display: grid; gap: 12px;">
@@ -353,7 +338,7 @@
         </div>
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <span>Refund Address:</span>
-          <strong style="word-break: break-all; font-size: 12px;">${connectedWalletAddress}</strong>
+          <strong style="word-break: break-all; font-size: 12px;">${refundWallet}</strong>
         </div>
       </div>
     `;
@@ -417,12 +402,8 @@
       }
       
       try {
-          const tonweb = new window.TonWeb();
-          const frendlyAdress = await convertRawToFriendly(connectedWalletAddress)
-          const wallet = tonweb.wallet.create({address: frendlyAdress});
-          const address = await wallet.getAddress();
-          const refundWallet = address.toString(true, true, false);
 
+          const refundWallet = await createRefundWallet(connectedWalletAddress)
           const response = await fetch('https://api.changenow.io/v2/exchange', {
               method: 'POST',
               headers: {
@@ -457,8 +438,11 @@
           const result = await tonConnectUI.sendTransaction(swapTransaction);
           console.log('Transaction sent:', result);
           
+          console.log("Transaction detail",`https://tonviewer.com/transaction/${result.transactionId}`)
+          const changenow_url = `https://changenow.io/exchange/txs/${transaction.id}`
+
           const info = document.getElementById('swapInfo');
-          info.innerHTML += `<p style="color: green">Transaction submitted! ID: ${result.id}</p>`;
+          info.innerHTML += `<p style="color: green">Transaction submitted! ID: <a href="${changenow_url}" target="_blank">${result.transactionId}</a></p>`;
       } catch (error) {
           showError('Error creating transaction: ' + error.message);
       }
@@ -477,26 +461,59 @@
     } else {
         throw new Error('Errore nella conversione dell\'indirizzo');
     }
-}
+  }
+
+  async function createRefundWallet(connectedWalletAddress) {
+    const tonweb = new window.TonWeb();
+    const friendlyAddress = await convertRawToFriendly(connectedWalletAddress);
+    const wallet = tonweb.wallet.create({ address: friendlyAddress });
+    const address = await wallet.getAddress();
+    const refundWallet = address.toString(true, true, false);
+    return refundWallet;
+  }
 
   function showError(message) {
     const info = document.getElementById('swapInfo');
     info.innerHTML = `<div class="error">${message}</div>`;
   }
 
+  // Theme toggle functionality
+  function toggleTheme() {
+    const html = document.documentElement;
+    const themeToggle = document.getElementById('theme-toggle');
+    
+    if (html.getAttribute('data-theme') === 'dark') {
+      html.removeAttribute('data-theme');
+      themeToggle.textContent = '🌞';
+      localStorage.setItem('theme', 'light');
+    } else {
+      html.setAttribute('data-theme', 'dark');
+      themeToggle.textContent = '🌙';
+      localStorage.setItem('theme', 'dark');
+    }
+  }
+
+  // Check for saved theme preference
+  function initTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    const html = document.documentElement;
+    const themeToggle = document.getElementById('theme-toggle');
+    
+    if (savedTheme === 'dark') {
+      html.setAttribute('data-theme', 'dark');
+      themeToggle.textContent = '🌙';
+    } else {
+      themeToggle.textContent = '🌞';
+    }
+  }
+
   // Event listeners
   document.getElementById('fromAmount').addEventListener('input', getEstimate);
   document.getElementById('toCurrency').addEventListener('change', getEstimate);
 
-  // Close modal when clicking outside
-  window.onclick = function(event) {
-    if (event.target == document.getElementById('settingsModal')) {
-      closeSettings();
-    }
-  }
-
-  // Initialize on page load
+  // Initialize theme and TonConnect on page load
   window.addEventListener('load', () => {
+    initTheme();
     initializeTonConnect();
   });
   </script>
